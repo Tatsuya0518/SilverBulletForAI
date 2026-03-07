@@ -5,7 +5,6 @@ Prevents AgentCard spoofing even within internal networks.
 
 from __future__ import annotations
 
-import base64
 import hashlib
 import json
 import logging
@@ -35,25 +34,23 @@ def sign_agent_card(card: AgentCard, private_key: str, algorithm: str = "RS256")
         algorithm: JWS algorithm (default: RS256).
 
     Returns:
-        AgentCardSignature with protected header and signature.
+        AgentCardSignature with the full JWT token and card hash.
     """
     card_data = card.to_json()
     card_data.pop("signature", None)
     canonical = _canonicalize_json(card_data)
+    card_hash = hashlib.sha256(canonical).hexdigest()
 
-    header = {"alg": algorithm, "typ": "JWT"}
-    protected = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-
+    # Store the full JWT compact serialization for reliable verification
     token = jwt.encode(
-        {"card_hash": hashlib.sha256(canonical).hexdigest()},
+        {"card_hash": card_hash},
         private_key,
         algorithm=algorithm,
     )
-    parts = token.split(".")
 
     return AgentCardSignature(
-        protected=protected,
-        signature=parts[2] if len(parts) == 3 else parts[-1],
+        protected=token,
+        signature=card_hash,
     )
 
 
@@ -77,10 +74,8 @@ def verify_agent_card(card: AgentCard, public_key: str, algorithm: str = "RS256"
     canonical = _canonicalize_json(card_data)
     expected_hash = hashlib.sha256(canonical).hexdigest()
 
-    token = f"{card.signature.protected}.{base64.urlsafe_b64encode(json.dumps({'card_hash': expected_hash}).encode()).decode().rstrip('=')}.{card.signature.signature}"
-
     try:
-        payload = jwt.decode(token, public_key, algorithms=[algorithm])
+        payload = jwt.decode(card.signature.protected, public_key, algorithms=[algorithm])
         return payload.get("card_hash") == expected_hash
     except jwt.InvalidTokenError:
         logger.warning("AgentCard '%s' signature verification failed", card.name)

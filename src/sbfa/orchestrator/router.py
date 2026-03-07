@@ -3,22 +3,17 @@
 Routing algorithm:
 1. Classify task by keywords + intent (code/multimodal/general/reasoning)
 2. Compute skill tag matching score for each agent
-3. Tie-breaking priority: latency > cost > last used
-4. Weighted score: skill_match * 0.5 + (1/latency_avg) * 0.3 + (1/cost_per_token) * 0.2
+3. Weighted score: skill_match * 0.5 + (1/latency_avg) * 0.3 + (1/cost_per_token) * 0.2
 
-Fallback conditions:
-- API error (4xx/5xx) -> next scored agent
-- Timeout (configurable, default 30s) -> next scored agent
-- Rate limit (429) -> immediate switch to different provider
-- All agents fail -> error + task history record
+Returns agents sorted by score (descending). The Coordinator handles
+fallback execution (timeout, API errors) by trying agents in order.
 """
 
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from sbfa.a2a.agent_card import AgentCard
 from sbfa.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -60,6 +55,10 @@ class TaskRouter:
     def register_agent(self, agent: BaseAgent) -> None:
         self._agents[agent.name] = agent
         self._stats[agent.name] = AgentStats()
+
+    def get_agent(self, name: str) -> BaseAgent | None:
+        """Get a registered agent by name."""
+        return self._agents.get(name)
 
     def classify_task(self, task: str) -> str:
         """Classify task into a category based on keywords."""

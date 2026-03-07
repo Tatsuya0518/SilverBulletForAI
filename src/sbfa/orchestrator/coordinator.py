@@ -138,9 +138,9 @@ class Coordinator:
         """Execute the same task on multiple agents in parallel."""
         context = await self._get_rag_context(task)
         agents = [
-            self._router._agents[name]
+            agent
             for name in agent_names
-            if name in self._router._agents
+            if (agent := self._router.get_agent(name)) is not None
         ]
 
         coros = [

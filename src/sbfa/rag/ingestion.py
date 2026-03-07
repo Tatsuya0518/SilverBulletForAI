@@ -33,6 +33,9 @@ def chunk_text(
     if not text:
         return []
 
+    if overlap >= chunk_size:
+        overlap = 0
+
     chunks: list[str] = []
     start = 0
     while start < len(text):
@@ -40,7 +43,10 @@ def chunk_text(
         chunk = text[start:end]
         if chunk.strip():
             chunks.append(chunk)
-        start = end - overlap
+        next_start = end - overlap
+        if next_start <= start:
+            next_start = start + 1
+        start = next_start
     return chunks
 
 

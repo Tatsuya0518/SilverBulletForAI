@@ -7,7 +7,7 @@ services:
     volumes:
       - surreal_data:/data/srdb
     environment:
-      - SURREAL_CAPS_ALLOW_ALL=true
+      - SURREAL_CAPS_ALLOW_ALL=${SURREAL_CAPS_ALLOW_ALL:-false}
 
 volumes:
   surreal_data:
