@@ -1,0 +1,3 @@
+[workspace]
+members = ["sbfa-core"]
+resolver = "2"
