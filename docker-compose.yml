@@ -1,0 +1,13 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2
+    command: start --user root --pass ${SURREAL_PASS:-root} rocksdb:/data/srdb
+    ports:
+      - "8000:8000"
+    volumes:
+      - surreal_data:/data/srdb
+    environment:
+      - SURREAL_CAPS_ALLOW_ALL=${SURREAL_CAPS_ALLOW_ALL:-false}
+
+volumes:
+  surreal_data:

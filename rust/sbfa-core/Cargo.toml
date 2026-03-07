@@ -1,0 +1,18 @@
+[package]
+name = "sbfa-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sbfa_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "benchmarks"
+harness = false
